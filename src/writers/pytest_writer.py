@@ -65,7 +65,7 @@ class PytestWriter(Writer):
         for i, case in enumerate(cases):
             body += "\n" + _render_case(case, i) + "\n"
 
-        with open(out_path, "w") as f:
+        with open(out_path, "w", encoding="utf-8") as f:
             f.write(body)
 
         return out_path

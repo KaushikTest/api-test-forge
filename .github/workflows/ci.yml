@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Compile-check all source files
+        run: python -m py_compile src/*.py src/writers/*.py
+
+      - name: Validate the committed example spec parses
+        run: |
+          cd src
+          python -c "from spec_parser import load_spec, extract_endpoints; \
+          spec = load_spec('../examples/petstore.yaml'); \
+          endpoints = extract_endpoints(spec); \
+          print(f'{len(endpoints)} endpoint(s) parsed OK')"
+
+      - name: Validate the committed example output is collectible by pytest
+        run: python -m pytest examples/generated-output/test_generated.py --collect-only -q

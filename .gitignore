@@ -38,3 +38,9 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+
+# Tool output
+generated/
+
+# Local scratch — v2 "spec-diff x test-suite-impact" research, kept local only
+NOTES-weekend-scope.md
