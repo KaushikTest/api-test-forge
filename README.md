@@ -43,6 +43,11 @@ retries once and, if that also fails, skips just that endpoint with a printed
 warning — the rest of the run completes normally. This is a real, observed
 model behavior, not a hypothetical.
 
+Generated test descriptions and paths are escaped before being written as Python.
+Cases without an expected HTTP status are marked as skipped for human review;
+they are not counted as passing checks. Review generated assertions before
+running them against an API.
+
 ## Setup
 
 ```

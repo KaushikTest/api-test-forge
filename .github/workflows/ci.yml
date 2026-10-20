@@ -20,6 +20,9 @@ jobs:
       - name: Compile-check all source files
         run: python -m py_compile src/*.py src/writers/*.py
 
+      - name: Test generated-code safety
+        run: python -m unittest discover -s tests -v
+
       - name: Validate the committed example spec parses
         run: |
           cd src

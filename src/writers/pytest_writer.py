@@ -12,6 +12,7 @@ Set API_BASE_URL before running, e.g.:
 
 import os
 import requests
+import pytest
 
 BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
 
@@ -24,6 +25,13 @@ def _slugify(text: str) -> str:
 
 def _render_case(case: TestCase, index: int) -> str:
     endpoint = case.endpoint
+    if case.category not in {"edge", "negative", "boundary"}:
+        raise ValueError("unsupported test category")
+    if case.expected_status is not None and (
+        type(case.expected_status) is not int
+        or not 100 <= case.expected_status <= 599
+    ):
+        raise ValueError("expected_status must be an HTTP status code or null")
     path = endpoint.path
     for name, value in case.path_params.items():
         path = path.replace("{" + name + "}", str(value))
@@ -31,10 +39,13 @@ def _render_case(case: TestCase, index: int) -> str:
     fn_name = f"test_{_slugify(endpoint.method + '_' + endpoint.path)}_{case.category}_{index}"
 
     lines = [f"def {fn_name}():"]
-    lines.append(f'    """{case.description}"""')
-    lines.append(f'    url = BASE_URL + "{path}"')
+    lines.append(f"    {case.description!r}")
+    if case.expected_status is None:
+        lines.append('    pytest.skip("No expected status; review this case before running")')
+        return "\n".join(lines) + "\n"
+    lines.append(f"    url = BASE_URL + {path!r}")
 
-    request_args = [f'"{endpoint.method.lower()}"', "url"]
+    request_args = [repr(endpoint.method.lower()), "url"]
     if case.query_params:
         lines.append(f"    params = {case.query_params!r}")
         request_args.append("params=params")
@@ -47,11 +58,7 @@ def _render_case(case: TestCase, index: int) -> str:
 
     lines.append(f"    response = requests.request({', '.join(request_args)})")
 
-    if case.expected_status is not None:
-        lines.append(f"    assert response.status_code == {case.expected_status}, response.text")
-    else:
-        lines.append("    # No specific status asserted — inspect manually.")
-        lines.append("    assert response is not None")
+    lines.append(f"    assert response.status_code == {case.expected_status}, response.text")
 
     return "\n".join(lines) + "\n"
 
